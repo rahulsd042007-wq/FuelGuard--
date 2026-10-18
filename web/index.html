@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FuelGuard+ Lorry</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Manrope:wght@400;600;800&display=swap">
+<style>
+:root{color-scheme:dark;--bg:#0b1014;--pn:#111a20;--ln:#22303a;--tx:#c5d4da;--mu:#8ba3ac;--am:#ffe08a;--tl:#35c2a0;--pu:#c9a9ff;--rd:#ff6b5e;--mono:'JetBrains Mono',monospace;--sans:'Manrope',system-ui,sans-serif}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 var(--sans);padding-bottom:env(safe-area-inset-bottom,0)}
+header{display:flex;align-items:center;gap:14px;padding:calc(12px + env(safe-area-inset-top,0)) 20px 12px;border-bottom:1px solid var(--ln);position:sticky;top:0;background:rgba(11,16,20,.92);backdrop-filter:blur(8px);z-index:20}
+header b{font:700 16px var(--mono);letter-spacing:.02em}header b i{color:var(--tl);font-style:normal}
+header span{color:var(--mu);font-size:12px;flex:1}
+.chip{font:12px var(--mono);color:var(--mu);border:1px solid var(--ln);background:none;border-radius:99px;padding:5px 12px;cursor:pointer;transition:.25s}
+.chip:hover,.chip.on{color:var(--am);border-color:var(--am);box-shadow:0 0 14px rgba(255,224,138,.25)}
+main{display:grid;grid-template-columns:minmax(0,1fr) 480px;gap:16px;padding:16px 20px}
+#stage{position:relative;height:calc(100vh - 120px);min-height:420px;border:1px solid var(--ln);border-radius:14px;overflow:hidden;position:sticky;top:64px}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block}
+#hint{position:absolute;left:12px;bottom:12px;font:12px/1.4 var(--mono);color:var(--mu);background:rgba(18,26,32,.7);border:1px solid var(--ln);border-radius:8px;padding:8px 12px;pointer-events:none}
+#load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--mu);font:13px monospace;z-index:5}
+aside{display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel{background:var(--pn);border:1px solid var(--ln);border-radius:14px;padding:14px}
+h2{margin:0 0 2px;font:700 13px var(--mono);color:#e6f1f4}
+.sub{margin:0 0 10px;color:var(--mu);font-size:12px}
+#kit svg{width:100%;height:auto;display:block}
+#kit text{font:9px var(--mono);fill:var(--mu)}
+#kit .nm{fill:#e6f1f4;font-weight:700}
+.w{fill:none;stroke:#3a5360;stroke-width:1.6;stroke-dasharray:4 4;animation:flow 1.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-8}}
+.hw{cursor:default}.hw rect.b{transition:.25s}
+.hw.go{cursor:pointer}.hw.go:hover rect.b,.hw.active rect.b{stroke:var(--am);filter:drop-shadow(0 0 6px rgba(255,224,138,.8))}
+.hw.active .w2{animation:ping 1.6s ease-out infinite}
+@keyframes ping{from{r:6;opacity:.9}to{r:26;opacity:0}}
+.hw.alert rect.b{stroke:var(--rd);filter:drop-shadow(0 0 6px var(--rd))}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.card{display:flex;gap:10px;align-items:center;text-align:left;font:inherit;color:inherit;background:#0e161b;border:1px solid var(--ln);border-radius:10px;padding:8px 10px;transition:.25s}
+.card i{font:700 10px var(--mono);font-style:normal;width:34px;height:34px;flex:none;border-radius:8px;display:grid;place-items:center;color:var(--c);border:1px solid var(--c);background:color-mix(in srgb,var(--c) 12%,transparent)}
+.card b{display:block;font:700 12px var(--mono);color:#e6f1f4;line-height:1.2}.card small{color:var(--mu);font-size:11px}
+button.card{cursor:pointer;grid-column:1/-1;border-color:color-mix(in srgb,var(--am) 55%,var(--ln))}
+button.card:hover,button.card.active{border-color:var(--am);transform:translateY(-1px);box-shadow:0 0 18px rgba(255,224,138,.22)}
+button.card em{margin-left:auto;font:11px var(--mono);color:var(--am);font-style:normal;white-space:nowrap}
+#gps{margin:0 20px 40px;scroll-margin-top:70px}
+#gps .panel{transition:border-color .5s,box-shadow .5s}
+#gps.open .panel{border-color:var(--am);box-shadow:0 0 0 1px rgba(255,224,138,.2),0 0 40px rgba(255,224,138,.12)}
+.gl{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px}
+#map{width:100%;height:auto;display:block;border-radius:10px;background:#0c1419;border:1px solid var(--ln)}
+#map text{font:10px var(--mono);fill:var(--mu)}
+.st{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.st div{flex:1;min-width:92px;border:1px solid var(--ln);border-radius:8px;padding:6px 9px;background:#0e161b}
+.st small{display:block;color:var(--mu);font-size:10px}.st b{font:700 12px var(--mono);color:var(--am)}
+#why{opacity:.0;transform:translateY(14px);transition:opacity .7s .25s,transform .7s .25s}
+#gps.open #why{opacity:1;transform:none}
+#idle{color:var(--mu);font-size:13px;border:1px dashed var(--ln);border-radius:10px;padding:14px;transition:.3s}
+#gps.open #idle{display:none}
+#why h3{margin:0 0 6px;font:700 15px var(--sans);color:var(--am)}
+#why p{margin:0 0 10px}
+#why li{margin:0 0 6px;padding-left:2px;list-style:none;display:flex;gap:8px}
+#why li:before{content:"";flex:none;width:7px;height:7px;margin-top:7px;border-radius:50%;background:var(--tl)}
+#why ul{padding:0;margin:0 0 12px}
+#sms{display:none;margin-top:10px;font:11px/1.5 var(--mono);color:#ffd0cb;background:rgba(255,107,94,.08);border:1px solid var(--rd);border-radius:10px;padding:9px 11px}
+#sms.on{display:block;animation:in .4s}
+@keyframes in{from{opacity:0;transform:translateY(6px)}}
+.btn{font:700 12px var(--mono);color:#0b1014;background:var(--am);border:0;border-radius:8px;padding:8px 12px;cursor:pointer}
+.btn.r{background:var(--rd)}
+@media(max-width:900px){main{grid-template-columns:1fr}#stage{position:relative;top:0;height:56vh}.gl{grid-template-columns:1fr}header span{display:none}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+#nav{position:fixed;left:50%;top:50%;z-index:50;width:min(440px,90vw);transform:translate(-50%,-46%) scale(.96);opacity:0;pointer-events:none;transition:.45s;background:rgba(11,16,20,.94);border:1px solid var(--am);border-radius:14px;padding:16px 18px;box-shadow:0 0 50px rgba(255,224,138,.25)}
+#nav.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#nav h3{margin:0 0 6px;font:700 15px var(--sans);color:var(--am)}#nav p{margin:0 0 8px}
+#nav ul{margin:0;padding-left:18px;color:var(--mu);font-size:13px}
+#nav .bar{height:3px;margin-top:12px;background:var(--ln);border-radius:3px;overflow:hidden}#nav .bar i{display:block;height:100%;width:0;background:var(--am)}
+#nav.on .bar i{width:100%;transition:width 2.4s linear}
+</style>
+</head>
+<body>
+<header><b>Fuel<i>Guard</i>+</b><span>Fuel-theft detection &amp; vehicle tracking</span><button class="chip" id="navGps">GPS tracking ↓</button></header>
+<main>
+  <section id="stage"><div id="load">loading lorry…</div><canvas id="c"></canvas>
+    <div id="hint">drag to orbit · scroll to zoom<br>lorry drives back and forth automatically</div></section>
+  <aside>
+    <div class="panel" id="kit">
+      <h2>FuelGuard Kit — hardware assembly</h2><p class="sub">Tank with sensors, wired to the ESP32 controller. Tap GPS to see tracking.</p>
+      <svg viewBox="0 0 360 300" role="img" aria-label="FuelGuard kit assembly">
+        <defs><clipPath id="tc"><rect x="24" y="170" width="214" height="100" rx="44"/></clipPath>
+          <linearGradient id="fg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8aa3a"/><stop offset="1" stop-color="#b9761c"/></linearGradient></defs>
+        <g class="wires">
+          <path class="w" d="M125,50H90"/><path class="w" d="M125,82H57V146"/><path class="w" d="M150,90V120H100V150"/><path class="w" d="M200,90V120H190V150"/>
+          <path class="w" d="M235,44H262"/><path class="w" d="M235,78H254V192H262"/>
+        </g>
+        <g clip-path="url(#tc)"><rect x="20" y="168" width="222" height="104" fill="#0f1c22"/><rect x="20" y="205" width="222" height="70" fill="url(#fg)" opacity=".92"/><rect x="20" y="256" width="222" height="16" fill="#2a6fb3" opacity=".85"/></g>
+        <rect x="24" y="170" width="214" height="100" rx="44" fill="none" stroke="#7fc6e6" stroke-width="2"/>
+        <rect x="118" y="160" width="26" height="10" rx="3" fill="#9aa0a4"/>
+        <text x="150" y="233" class="nm" fill="#3b2406" style="fill:#3b2406">FUEL</text><text x="196" y="266" style="fill:#d8ecff">WATER</text>
+        <g class="hw"><rect class="b" x="125" y="24" width="110" height="66" rx="5" fill="#0e3d24" stroke="#2f7a52"/><rect x="150" y="36" width="42" height="30" rx="3" fill="#1b1c20"/><rect x="198" y="30" width="30" height="8" rx="2" fill="#c9a9ff" opacity=".7"/>
+          <text x="180" y="78" class="nm" text-anchor="middle">ESP32</text></g>
+        <g class="hw"><rect class="b" x="16" y="30" width="74" height="40" rx="4" fill="#1f5fae" stroke="#5b97df"/><rect x="26" y="40" width="18" height="14" fill="#101216"/><text x="53" y="63" class="nm" text-anchor="middle" style="font-size:8px">MPU6050</text></g>
+        <g class="hw"><rect class="b" x="44" y="146" width="26" height="24" rx="3" fill="#3a444a" stroke="#6c7a82"/><text x="57" y="140" class="nm" text-anchor="middle" style="font-size:8px">VIBRATION</text></g>
+        <g class="hw"><rect class="b" x="92" y="150" width="16" height="8" rx="2" fill="#d7b34c" stroke="#d7b34c"/><line x1="100" y1="158" x2="100" y2="214" stroke="#d7b34c" stroke-width="3"/><circle cx="100" cy="206" r="8" fill="#ffe08a" stroke="#3b2406"/><text x="64" y="196" class="nm" text-anchor="end" style="font-size:8px">FLOAT</text></g>
+        <g class="hw"><rect class="b" x="182" y="150" width="16" height="8" rx="2" fill="#6fb4e8" stroke="#6fb4e8"/><line x1="190" y1="158" x2="190" y2="262" stroke="#6fb4e8" stroke-width="3"/><text x="170" y="200" class="nm" text-anchor="end" style="font-size:8px">WATER LVL</text></g>
+        <g class="hw go" id="svgGps" tabindex="0" role="button" aria-label="Open GPS tracking"><circle class="w2" cx="304" cy="52" r="6" fill="none" stroke="#ffe08a"/><rect class="b" x="262" y="30" width="84" height="46" rx="5" fill="#1f5fae" stroke="#5b97df"/><rect x="270" y="36" width="30" height="30" rx="2" fill="#cabf8f"/><text x="323" y="50" class="nm" text-anchor="middle" style="font-size:8px">GPS</text><text x="323" y="62" text-anchor="middle" style="font-size:7px">NEO-6M</text></g>
+        <g class="hw"><rect class="b" x="262" y="170" width="84" height="44" rx="5" fill="#1f5fae" stroke="#5b97df"/><circle cx="278" cy="192" r="8" fill="#d8701f"/><text x="322" y="190" class="nm" text-anchor="middle" style="font-size:8px">VOLTAGE</text><text x="322" y="201" text-anchor="middle" style="font-size:7px">SENSOR</text></g>
+      </svg>
+    </div>
+    <div class="panel">
+      <h2>Components Used</h2><p class="sub">6 modules · all controlled by the ESP32</p>
+      <div class="cards">
+        <div class="card" style="--c:var(--pu)"><i>MCU</i><div><b>ESP32</b><small>Main controller</small></div></div>
+        <div class="card" style="--c:#6fb4e8"><i>LVL</i><div><b>Float / Water</b><small>Fuel &amp; water level</small></div></div>
+        <div class="card" style="--c:#8fc3ff"><i>IMU</i><div><b>MPU6050</b><small>Tilt &amp; motion</small></div></div>
+        <div class="card" style="--c:#c9d4d9"><i>VIB</i><div><b>Vibration</b><small>Tank tampering</small></div></div>
+        <button class="card" id="cardGps" style="--c:var(--am)"><i>GPS</i><div><b>GPS (NEO-6M)</b><small>Vehicle location</small></div><em>view tracking →</em></button>
+        <div class="card" style="--c:var(--tl)"><i>VLT</i><div><b>Voltage</b><small>Battery check</small></div></div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div id="nav" role="status"><h3>Navigating to GPS tracking…</h3><p>GPS is used to track the vehicle's real-time location and identify its position when a fuel theft or suspicious activity is detected.</p><ul><li>Track the vehicle location</li><li>Locate the vehicle during a theft alert</li><li>Send the location along with the alert</li><li>Monitor the journey</li></ul><div class="bar"><i></i></div></div>
+<section id="gps">
+  <div class="panel">
+    <h2>GPS — Vehicle Location Tracking</h2><p class="sub">Live position from the NEO-6M module (simulated route for this demo)</p>
+    <div class="gl">
+      <div>
+        <svg id="map" viewBox="0 0 520 300">
+          <defs><pattern id="gr" width="26" height="26" patternUnits="userSpaceOnUse"><path d="M26 0H0V26" fill="none" stroke="#16222a"/></pattern></defs>
+          <rect width="520" height="300" fill="url(#gr)"/>
+          <path d="M0 220C120 200 160 120 280 130S430 60 520 80" stroke="#1d2b34" stroke-width="16" fill="none"/>
+          <path d="M120 0C140 90 220 180 200 300" stroke="#19262e" stroke-width="10" fill="none"/>
+          <path d="M360 300C350 220 400 160 470 140" stroke="#19262e" stroke-width="10" fill="none"/>
+          <rect x="300" y="190" width="90" height="50" rx="6" fill="#102028" stroke="#1c3a46"/><text x="312" y="219">fuel stop</text>
+          <path id="route" d="M30 215C130 195 165 125 280 132S425 65 495 82" fill="none" stroke="#35c2a0" stroke-width="3" stroke-dasharray="7 6"/>
+          <path id="trail" fill="none" stroke="#ffe08a" stroke-width="4" stroke-linecap="round"/>
+          <g id="mk"><circle id="ring" r="10" fill="none" stroke="#ffe08a" stroke-width="2"><animate attributeName="r" values="8;30" dur="1.8s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="1.8s" repeatCount="indefinite"/></circle>
+            <path d="M0 -4C-12 -22-12 -34 0 -34S12 -22 0 -4Z" fill="#ffe08a" stroke="#0b1014" stroke-width="2" id="pin"/><circle cy="-23" r="4" fill="#0b1014"/></g>
+          <text x="14" y="288">● start</text><text x="446" y="68">● dest.</text>
+        </svg>
+        <div class="st"><div><small>Latitude</small><b id="lat">—</b></div><div><small>Longitude</small><b id="lon">—</b></div><div><small>Speed</small><b id="spd">—</b></div><div><small>Status</small><b id="stat">Tracking</b></div></div>
+      </div>
+      <div>
+        <div id="idle">Select <b>GPS</b> in the FuelGuard kit to see why it is used.</div>
+        <div id="why">
+          <h3>GPS – Vehicle Location Tracking</h3>
+          <p>GPS is used to track the vehicle's real-time location and identify the vehicle's position when a fuel theft or suspicious activity is detected.</p>
+          <ul><li>Tracks the vehicle location</li><li>Locates the vehicle during a theft alert</li><li>Sends the location along with the alert</li><li>Monitors the vehicle's journey</li></ul>
+          <button class="btn r" id="sim">Simulate theft alert</button> <button class="btn" id="back" style="background:none;color:var(--mu);border:1px solid var(--ln)">↑ back to kit</button>
+          <div id="sms"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const stageEl=document.getElementById('stage');const canvas = document.getElementById('c');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b1014);
+scene.fog = new THREE.Fog(0x0b1014, 16, 40);
+
+const camera = new THREE.PerspectiveCamera(42, stageEl.clientWidth/stageEl.clientHeight, 0.1, 100);
+camera.position.set(8, 5, 9);
+
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setSize(stageEl.clientWidth, stageEl.clientHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled = true;
+renderer.outputEncoding = THREE.sRGBEncoding;
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = .08;
+controls.target.set(0,1.2,0); controls.maxPolarAngle = Math.PI*.49; controls.minDistance=3; controls.maxDistance=22;
+
+// lights
+scene.add(new THREE.HemisphereLight(0x8fb8c9,0x1a1410,0.9));
+const sun = new THREE.DirectionalLight(0xfff2d9,1.8);
+sun.position.set(9,12,6); sun.castShadow=true;
+sun.shadow.mapSize.set(1024,1024);
+sun.shadow.camera.left=-10;sun.shadow.camera.right=10;sun.shadow.camera.top=10;sun.shadow.camera.bottom=-10;
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0xcfe0e6,0.5); fill.position.set(-6,5,-4); scene.add(fill);
+
+// ground
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(80,80), new THREE.MeshStandardMaterial({color:0x11171b,roughness:.95}));
+ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
+scene.add(new THREE.GridHelper(80,80,0x22303a,0x161f24));
+
+// ---- materials ----
+const M = {
+  cab: new THREE.MeshStandardMaterial({color:0x1c3f5e,roughness:.4,metalness:.5}),
+  trim: new THREE.MeshStandardMaterial({color:0x10181d,roughness:.5,metalness:.4}),
+  chassis: new THREE.MeshStandardMaterial({color:0x2a2f33,roughness:.7,metalness:.5}),
+  rail: new THREE.MeshStandardMaterial({color:0x14181b,roughness:.8,metalness:.5}),
+  glass: new THREE.MeshPhysicalMaterial({color:0x8fd6ff,transparent:true,opacity:.28,roughness:.05}),
+  // plain alpha-blended "glass" instead of MeshPhysicalMaterial.transmission —
+  // transmission needs a render pass three.js r128 doesn't ship, so it was
+  // rendering almost solid. depthWrite:false + low opacity + double-sided is
+  // what actually reads as see-through in this renderer.
+  tank: new THREE.MeshPhysicalMaterial({color:0xcfeeff,transparent:true,opacity:.16,roughness:.05,metalness:0,depthWrite:false,side:THREE.DoubleSide}),
+  fuel: new THREE.MeshStandardMaterial({color:0xd7962c,roughness:.25,transparent:true,opacity:.92,depthWrite:false}),
+  tire: new THREE.MeshStandardMaterial({color:0x0d0e10,roughness:.95}),
+  rim: new THREE.MeshStandardMaterial({color:0x9aa0a4,roughness:.3,metalness:.85}),
+  gold: new THREE.MeshStandardMaterial({color:0xd7b34c,roughness:.35,metalness:.7}),
+  light: new THREE.MeshStandardMaterial({color:0xfff6d8,emissive:0xfff2b0,emissiveIntensity:.5}),
+  pcb: new THREE.MeshStandardMaterial({color:0x0e3d24,roughness:.6}),
+  chip: new THREE.MeshStandardMaterial({color:0x0c0c0e,roughness:.4,metalness:.3}),
+  pin: new THREE.MeshStandardMaterial({color:0xc9c9c9,roughness:.3,metalness:.85}),
+  led: new THREE.MeshStandardMaterial({color:0x35c2a0,emissive:0x35c2a0,emissiveIntensity:1.3}),
+  box: new THREE.MeshStandardMaterial({color:0x2b3236,roughness:.5,metalness:.3}),
+  wireY: new THREE.MeshStandardMaterial({color:0xd8c22a}),
+  wireR: new THREE.MeshStandardMaterial({color:0xb32424}),
+  brass: new THREE.MeshStandardMaterial({color:0xb08c3e,roughness:.3,metalness:.85}),
+  cream: new THREE.MeshStandardMaterial({color:0xe8e4d4,roughness:.7}),       // breadboard body
+  blueb: new THREE.MeshStandardMaterial({color:0x1f5fae,roughness:.5,metalness:.2}), // small breakout PCBs
+  orange: new THREE.MeshStandardMaterial({color:0xd8701f,roughness:.5}),
+  wireO: new THREE.MeshStandardMaterial({color:0xcf6a1a}),
+  wireW: new THREE.MeshStandardMaterial({color:0xd8d8d2}),
+  wireBl: new THREE.MeshStandardMaterial({color:0x2a5fb0}),
+};
+
+function box(w,h,d,mat,x,y,z){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;return m;}
+function cyl(rt,rb,h,mat,x,y,z,rad=16){const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,rad),mat);m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;return m;}
+function makeLabel(text,color='#8fe0c4'){
+  const c=document.createElement('canvas'); c.width=192; c.height=56;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='rgba(11,16,20,0.82)'; ctx.fillRect(0,0,192,56);
+  ctx.strokeStyle=color; ctx.lineWidth=2; ctx.strokeRect(2,2,188,52);
+  ctx.fillStyle=color; ctx.font='bold 24px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(text,96,29);
+  const tex=new THREE.CanvasTexture(c);
+  const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));
+  spr.scale.set(.5,.15,1); spr.renderOrder=10;
+  return spr;
+}
+function wire(parent,p0,p1,mat,r=0.01,sag=.08){
+  const a=new THREE.Vector3(...p0), b=new THREE.Vector3(...p1);
+  const mid=a.clone().lerp(b,.5); mid.y-=sag;
+  const curve=new THREE.CatmullRomCurve3([a,mid,b]);
+  const m=new THREE.Mesh(new THREE.TubeGeometry(curve,12,r,6,false),mat);
+  m.castShadow=true; parent.add(m); return m;
+}
+
+// ==================== LORRY ====================
+const lorry = new THREE.Group();
+scene.add(lorry);
+
+// chassis
+lorry.add(box(6.6,.14,.16,M.rail,-.15,.62,.75));
+lorry.add(box(6.6,.14,.16,M.rail,-.15,.62,-.75));
+for(let x=-3.1;x<=2.9;x+=1.15) lorry.add(box(.1,.12,1.66,M.rail,x,.62,0));
+
+// cab (cab-over)
+const cab = new THREE.Group();
+cab.add(box(1.75,1.55,1.85,M.cab,0,.95,0));
+cab.add(box(1.8,.14,1.9,M.gold,0,1.78,0));
+const wshield = box(.05,.85,1.55,M.glass,.865,1.28,0); wshield.rotation.z=-.09; cab.add(wshield);
+[.62,-.62].forEach(z=>cab.add(box(1.5,.4,.04,M.glass,0,1.42,z)));
+cab.add(box(.08,.55,1.85,M.trim,.9,.68,0));
+cab.add(box(.1,.28,1.1,M.box,.94,.6,0));
+cab.add(box(.14,.14,1.95,M.rail,.92,.28,0));
+[.78,-.78].forEach(z=>{cab.add(box(.1,.24,.26,M.trim,.94,.45,z));cab.add(box(.03,.16,.11,M.light,1.0,.49,z));});
+[1,-1].forEach(s=>{cab.add(box(.04,.04,.32,M.trim,.8,1.5,s*.95));const mr=box(.05,.26,.17,M.trim,.8,1.5,s*1.14);cab.add(mr);});
+cab.position.set(-2.7,.62,0);
+lorry.add(cab);
+
+// saddle fuel tank — TRANSPARENT with a visible fuel-level fill inside
+const tank = new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,1.3,24), M.tank);
+tank.rotation.z=Math.PI/2; tank.position.set(-1.55,.98,.82); lorry.add(tank);
+const fuel = new THREE.Mesh(new THREE.CylinderGeometry(.24,.24,1.22,24), M.fuel);
+fuel.rotation.z=Math.PI/2; fuel.position.set(-1.55,.9,.82); fuel.renderOrder=1; lorry.add(fuel); // level sits a bit below tank center
+tank.renderOrder=2;
+[-.5,.5].forEach(o=>{const r=new THREE.Mesh(new THREE.TorusGeometry(.31,.02,8,20),M.gold);r.rotation.y=Math.PI/2;r.position.set(-1.55+o,.98,.82);lorry.add(r);});
+[-.35,.35].forEach(o=>lorry.add(box(.07,.5,.07,M.rail,-1.55+o,.68,.82)));
+const cap = cyl(.07,.07,.06,M.rim,-1.55,1.3,.88); lorry.add(cap);
+
+// tipper bed
+lorry.add(box(3.75,.1,1.86,M.rail,1.05,1.02,0));
+lorry.add(box(.08,1.0,1.86,M.cab,-.78,1.5,0));
+[.93,-.93].forEach(z=>{lorry.add(box(3.75,.72,.06,M.cab,1.05,1.36,z));lorry.add(box(3.8,.06,.08,M.gold,1.05,1.7,z));});
+lorry.add(box(.08,.72,1.86,M.cab,2.92,1.36,0));
+
+// ---- OPEN electronics kit ----
+// Moved to the OPPOSITE chassis rail from the tank (z negative instead of
+// positive) and well back along the frame, so it reads as its own clearly
+// separate component instead of crowding the tank. "Open" is now shown two
+// ways: the tray has real side walls (not just a flat slab) AND its lid is
+// visibly removed and propped open beside it.
+const kit = new THREE.Group(); kit.position.set(0.15,.78,-.82); kit.scale.set(1.9,1.9,1.9);
+kit.add(box(.46,.05,.5,M.box,0,-.08,0));                              // floor
+[[0,.235],[0,-.235]].forEach(([x,z])=>kit.add(box(.46,.12,.03,M.box,x,-.015,z)));   // front/back walls
+[[.215,0],[-.215,0]].forEach(([x,z])=>kit.add(box(.03,.12,.5,M.box,x,-.015,z)));    // side walls
+[[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz])=>kit.add(cyl(.012,.012,.03,M.pin,sx*.19,.03,sz*.21,6)));
+
+// two breadboards side by side — the actual prototyping surface everything plugs into
+[-0.105,0.105].forEach(x=>{
+  const bb=box(.2,.016,.44,M.cream,x,0,-.01); kit.add(bb);
+  for(let i=-3;i<=3;i++) kit.add(box(.17,.002,.006,new THREE.MeshStandardMaterial({color:0xc7c2ae}),x,.009,-.01+i*.055));
+});
+
+// ESP32 dev board straddling the top of both breadboards
+kit.add(box(.17,.02,.07,M.chip,0,.016,-.19));
+kit.add(box(.1,.03,.06,M.pin,0,.026,-.19));           // metal shield can
+kit.add(box(.02,.014,.02,M.pin,.07,.02,-.21));        // usb-c nub
+
+// MPU6050 IMU — small blue breakout near the ESP32
+kit.add(box(.05,.012,.06,M.blueb,-.17,.016,-.14));
+
+// buzzer — small black can with the characteristic perforated top
+kit.add(cyl(.03,.03,.02,M.chip,-.06,.018,.07,16));
+kit.add(cyl(.012,.012,.003,new THREE.MeshStandardMaterial({color:0x444}),-.06,.029,.07,10));
+
+// GPS module + its square ceramic patch antenna, sitting together on the board
+kit.add(box(.07,.012,.09,M.blueb,.14,.016,.06));
+kit.add(box(.06,.016,.06,new THREE.MeshStandardMaterial({color:0xcabf8f,roughness:.5}),.14,.03,.09));
+
+// switch
+kit.add(box(.04,.03,.03,M.orange,.17,.016,.19));
+
+// voltage boost converter
+kit.add(box(.08,.012,.045,M.blueb,-.02,.016,.19));
+
+// a believable tangle of colorful jumper wires arcing across the breadboards
+const wireCols=[M.wireY,M.wireR,M.wireBl,M.wireO,M.wireW];
+const wirePts=[[-.14,-.15,-.14,.12],[.0,-.1,.12,.1],[-.1,.02,.1,-.05],[-.17,-.05,.0,.17],[.05,-.17,.15,.05],[-.05,.1,-.14,.19]];
+wirePts.forEach((p,i)=>wire(kit,[p[0],.02,p[1]],[p[2],.02,p[3]],wireCols[i%wireCols.length],.004,.05));
+
+const kitLed = new THREE.Mesh(new THREE.SphereGeometry(.01,8,8),M.led); kitLed.position.set(.02,.03,-.19); kit.add(kitLed);
+// the lid — detached and propped open against the frame rail beside the tray
+const lid = box(.46,.02,.5,M.box,.62,-.04,.08); lid.rotation.x=-1.15; lid.rotation.z=0.08; kit.add(lid);
+kit.add(cyl(.012,.012,.03,M.pin,.62,-.04,-.14,6));  // one hinge pin still visible on the lid edge
+lorry.add(kit);
+
+// vibration sensor stub on the tank shell (wired back to the kit)
+const vib = box(.06,.03,.05,M.box,-1.85,1.0,1.08); lorry.add(vib);
+
+// GPS whip-style patch antenna on the cab roof — the module itself lives
+// inside the kit box; only the antenna needs to be externally sky-facing
+const gpsAnt = box(.1,.02,.1,new THREE.MeshStandardMaterial({color:0xcabf8f,roughness:.5}),-2.75,2.76,-.25);
+lorry.add(gpsAnt);
+lorry.add(cyl(.02,.02,.18,M.trim,-2.75,2.67,-.25,8));
+const antLabel=makeLabel('GPS ANT','#ffe08a'); antLabel.position.set(-2.75,2.95,-.25); lorry.add(antLabel);
+
+// wiring from kit to tank/sensors
+// sensor bus crosses under the chassis from the kit's rail to the tank's rail
+wire(lorry,[0.15,.7,-.82],[-1.55,1.1,.75],M.wireY,.008,.1);     // sensor lead up to the tank cap
+wire(lorry,[0.15,.7,-.82],[-1.85,1.0,1.0],M.wireY,.008,.12);    // sensor lead to the vibration pickup
+wire(lorry,[0.2,.75,-.82],[-2.75,2.67,-.25],M.wireBl,.006,.3);  // GPS antenna coax, box -> roof
+
+// wheels (baked rolling axis so we can just spin mesh.rotation.z each frame)
+function wheel(x,z){
+  const g=new THREE.Group();
+  const tg=new THREE.CylinderGeometry(.55,.55,.42,24); tg.rotateX(Math.PI/2);
+  const tire=new THREE.Mesh(tg,M.tire); tire.castShadow=true;
+  const rg=new THREE.CylinderGeometry(.28,.28,.44,14); rg.rotateX(Math.PI/2);
+  const rim=new THREE.Mesh(rg,M.rim);
+  g.add(tire,rim); g.position.set(x,.55,z); return g;
+}
+const wheels=[[-2.7,1.05],[-2.7,-1.05],[.9,1.05],[.9,-1.05],[2.35,1.05],[2.35,-1.05]].map(([x,z])=>{const w=wheel(x,z);lorry.add(w);return w;});
+
+// mudguards over the tandem rear axle
+[0.9,2.35].forEach(x=>[1.05,-1.05].forEach(z=>{
+  const guard=new THREE.Mesh(new THREE.CylinderGeometry(.62,.62,.46,16,1,false,0,Math.PI),M.rail);
+  guard.rotation.z=Math.PI/2; guard.rotation.y=Math.PI/2;
+  guard.position.set(x,.92,z>0?1.06:-1.06); lorry.add(guard);
+}));
+
+lorry.add(box(.5,.08,1.9,M.rail,3.15,.55,0)); // rear bar
+[.75,-.75].forEach(z=>lorry.add(box(.05,.12,.16,M.box,3.15,.75,z)));
+
+// ==================== animate: drive back & forth ====================
+const clock = new THREE.Clock();
+const driveSpan = 2.6, wheelRadius = .55;
+let prevX = 0;
+function animate(){
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+  const x = Math.sin(t*0.35)*driveSpan;
+  lorry.position.x = x;
+  const delta = x - prevX; prevX = x;
+  wheels.forEach(w=>w.rotation.z -= delta/wheelRadius);
+  kitLed.material.emissiveIntensity = 0.9 + Math.sin(t*4)*0.5;
+  if(window.gpsOn){const s=1+Math.sin(t*6)*.3;gpsAnt.scale.set(s,1,s);}else gpsAnt.scale.set(1,1,1);
+  controls.update();
+  renderer.render(scene,camera);
+}
+new ResizeObserver(()=>{const w=stageEl.clientWidth,h=stageEl.clientHeight;if(!w||!h)return;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);}).observe(stageEl);
+document.getElementById('load').style.display='none';
+animate();
+
+</script>
+<script>
+// ===== FuelGuard UI: GPS card -> tracking section =====
+(()=>{
+  const $=id=>document.getElementById(id), gpsSec=$('gps'), vib=document.querySelectorAll('#kit .hw')[2];
+  const route=$('route'), len=route.getTotalLength(), mk=$('mk'), trail=$('trail');
+  let alertOn=false, pf=0, pt=performance.now(), spd=0;
+  function openGps(){
+    gpsSec.classList.add('open'); $('cardGps').classList.add('active'); $('svgGps').classList.add('active');
+    $('navGps').classList.add('on'); window.gpsOn=true;
+    const nv=$('nav'); nv.classList.add('on'); clearTimeout(openGps.t); openGps.t=setTimeout(()=>nv.classList.remove('on'),2700);
+    gpsSec.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  ['cardGps','navGps'].forEach(i=>$(i).addEventListener('click',openGps));
+  $('svgGps').addEventListener('click',openGps);
+  $('svgGps').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openGps();}});
+  $('back').addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));
+  $('sim').addEventListener('click',()=>{
+    alertOn=!alertOn; vib.classList.toggle('alert',alertOn);
+    $('sim').textContent=alertOn?'Clear alert':'Simulate theft alert';
+    $('stat').textContent=alertOn?'THEFT ALERT':'Tracking'; $('stat').style.color=alertOn?'var(--rd)':'';
+    $('pin').setAttribute('fill',alertOn?'#ff6b5e':'#ffe08a'); $('ring').setAttribute('stroke',alertOn?'#ff6b5e':'#ffe08a');
+    $('sms').classList.toggle('on',alertOn);
+  });
+  function tick(now){
+    const f=Math.min(1,Math.max(0,(lorry.position.x+2.6)/5.2)), p=route.getPointAtLength(f*len);
+    mk.setAttribute('transform',`translate(${p.x},${p.y})`);
+    let d='M';for(let i=0;i<=24;i++){const q=route.getPointAtLength(f*len*i/24);d+=`${q.x.toFixed(1)},${q.y.toFixed(1)} `;} trail.setAttribute('d',d);
+    const dt=Math.max(1e-3,(now-pt)/1000); spd+=(Math.abs(f-pf)/dt*5.2/0.91*48-spd)*.1; pf=f; pt=now;
+    const lat=(12.9+f*.06).toFixed(5), lon=(77.5+f*.09).toFixed(5);
+    $('lat').textContent=lat+'° N'; $('lon').textContent=lon+'° E'; $('spd').textContent=Math.round(spd)+' km/h';
+    if(alertOn) $('sms').textContent=`FuelGuard ALERT: fuel drop + tank vibration. Vehicle at ${lat}, ${lon}.`;
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
